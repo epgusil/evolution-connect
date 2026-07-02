@@ -289,9 +289,21 @@ function InstructionsView({ busy, onStartRound }: { busy: boolean; onStartRound:
     "Finalmente, el ganador será aquel que conoció a más personas en total y si hay un empate, se escogerá aleatoriamente a uno de ellos.",
   ];
   return (
-    <div className="glass-card" style={{ maxWidth: 640, width: "100%" }}>
+    <div
+      className="glass-card"
+      style={{ maxWidth: 640, width: "100%", maxHeight: "80vh", display: "flex", flexDirection: "column" }}
+    >
       <span className="eyebrow">Instrucciones para los jugadores</span>
-      <ol style={{ fontSize: 19, lineHeight: 1.8, color: "var(--color-text)", paddingLeft: 22 }}>
+      <ol
+        style={{
+          fontSize: 19,
+          lineHeight: 1.8,
+          color: "var(--color-text)",
+          paddingLeft: 22,
+          overflowY: "auto",
+          paddingRight: 8,
+        }}
+      >
         {items.map((t) => (
           <li key={t}>{t}</li>
         ))}
