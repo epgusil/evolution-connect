@@ -122,20 +122,23 @@ function registerSocketHandlers(io) {
       }
     });
 
-    // Reconexión: el jugador vuelve a entrar con un playerId que ya tenía
+// Reconexión: el jugador vuelve a entrar con un playerId que ya tenía
     socket.on("player:rejoin", ({ playerId } = {}, ack) => {
-      const player = gs.getPlayer(playerId);
-      if (!player) return ack?.({ ok: false, error: "PLAYER_NOT_FOUND" });
-      player.socketId = socket.id;
-      player.connected = true;
-      socket.join(PLAYERS_ROOM);
-      socket.data.playerId = player.id;
-      io.to(ADMIN_ROOM).emit("admin_snapshot", gs.serializeAdminSnapshot());
-      ack?.({
-        ok: true,
-        playerId: player.id,
-        snapshot: gs.serializePlayerSnapshot(player.id),
-      });
+      try {
+        const player = gs.reconnectPlayer(playerId, socket.id);
+        if (!player) return ack?.({ ok: false, error: "PLAYER_NOT_FOUND" });
+
+        socket.join(PLAYERS_ROOM);
+        socket.data.playerId = player.id;
+        io.to(ADMIN_ROOM).emit("admin_snapshot", gs.serializeAdminSnapshot());
+        ack?.({
+          ok: true,
+          playerId: player.id,
+          snapshot: gs.serializePlayerSnapshot(player.id),
+        });
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
     });
 
     socket.on("player:get_snapshot", (_payload, ack) => {
