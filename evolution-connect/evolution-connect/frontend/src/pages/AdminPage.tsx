@@ -302,6 +302,8 @@ function InstructionsView({ busy, onStartRound }: { busy: boolean; onStartRound:
           paddingLeft: 22,
           overflowY: "auto",
           paddingRight: 8,
+          flex: 1,
+          minHeight: 0,
         }}
       >
         {items.map((t) => (
