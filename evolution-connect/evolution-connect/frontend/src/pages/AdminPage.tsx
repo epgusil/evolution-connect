@@ -1,12 +1,13 @@
 import { useEffect, useState, useCallback } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { socket, emitAck } from "../lib/socket";
-import type { AdminSnapshot, LeaderboardEntry } from "../lib/types";
+import type { AdminSnapshot, LeaderboardEntry, FinalResults } from "../lib/types";
 import ParticleField from "../components/ParticleField";
 import { useCountdown, formatMMSS } from "../lib/useCountdown";
 
 export default function AdminPage() {
   const [snapshot, setSnapshot] = useState<AdminSnapshot | null>(null);
+  const [finalResults, setFinalResults] = useState<FinalResults | null>(null);
   const [busy, setBusy] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
 
@@ -37,6 +38,19 @@ export default function AdminPage() {
     if (!res.ok) {
       console.error(event, res.error);
       alert("No se pudo completar la acción: " + (res.error ?? "error desconocido"));
+    }
+  }, []);
+
+  const finishGame = useCallback(async () => {
+    setBusy(true);
+    const res = await emitAck<{ ok: boolean; results?: FinalResults; error?: string }>(
+      "admin:finish_game"
+    );
+    setBusy(false);
+    if (res.ok && res.results) {
+      setFinalResults(res.results);
+    } else {
+      alert("No se pudo finalizar el juego: " + (res.error ?? "error desconocido"));
     }
   }, []);
 
@@ -78,10 +92,12 @@ export default function AdminPage() {
           snapshot={snapshot}
           busy={busy}
           onNextRound={() => run("admin:start_round")}
-          onFinishGame={() => run("admin:finish_game")}
+          onFinishGame={finishGame}
         />
       )}
-      {snapshot.status === "finished" && <FinalResultsView snapshot={snapshot} />}
+      {snapshot.status === "finished" && (
+        <FinalResultsView snapshot={snapshot} finalResults={finalResults} />
+      )}
 
       {confirmReset && (
         <ConfirmResetModal
@@ -412,18 +428,39 @@ function BetweenRoundsView({
   );
 }
 
-function FinalResultsView({ snapshot }: { snapshot: AdminSnapshot }) {
-  const top = snapshot.leaderboard[0];
+function FinalResultsView({
+  snapshot,
+  finalResults,
+}: {
+  snapshot: AdminSnapshot;
+  finalResults: FinalResults | null;
+}) {
+  // Si tenemos el resultado resuelto por el servidor (viene del ack de
+  // admin:finish_game), lo usamos porque es la fuente de verdad real,
+  // incluida la resolución de empates. Si no (p. ej. se recargó la página
+  // del admin después de finalizar), caemos al primero del leaderboard como
+  // aproximación razonable.
+  const winnerId = finalResults?.resolvedWinnerId;
+  const winner = winnerId
+    ? snapshot.leaderboard.find((e) => e.id === winnerId)
+    : snapshot.leaderboard[0];
+  const hadTie = finalResults?.needsTieBreaker ?? false;
+
   return (
     <div style={{ width: "100%", maxWidth: 1040, display: "flex", flexDirection: "column", gap: 20 }}>
       <div className="glass-card" style={{ textAlign: "center" }}>
         <span className="eyebrow">Resultados finales</span>
         <h2 className="display-title" style={{ fontSize: "clamp(32px,5vw,52px)" }}>
-          🏆 {top ? top.name : "Sin ganador"}
+          🏆 {winner ? winner.name : "Sin ganador"}
         </h2>
         <p style={{ color: "var(--color-text-dim)", fontSize: 18 }}>
-          {top ? `${top.score} conexiones confirmadas` : "Nadie confirmó conexiones"}
+          {winner ? `${winner.score} conexiones confirmadas` : "Nadie confirmó conexiones"}
         </p>
+        {hadTie && (
+          <p style={{ color: "var(--color-warning)", fontSize: 14 }}>
+            Hubo empate — el ganador se sorteó entre los empatados.
+          </p>
+        )}
         <p style={{ color: "var(--color-text-dim)" }}>
           Total de conexiones generadas en el evento: <strong>{snapshot.totalConnections}</strong>
         </p>

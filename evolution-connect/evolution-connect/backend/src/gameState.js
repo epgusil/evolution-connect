@@ -37,6 +37,7 @@ function createFreshState() {
     roundEndsAt: null,
     roundTimer: null,
     tieBreakerCandidates: [],
+    resolvedWinnerId: null,
   };
 }
 
@@ -273,11 +274,23 @@ function computeFinalResults() {
   const leaderboard = serializeLeaderboard();
   const topScore = leaderboard[0]?.score ?? 0;
   const winners = leaderboard.filter((p) => p.score === topScore && topScore > 0);
+
+  // El desempate se resuelve UNA sola vez aquí, en el servidor. Es la única
+  // fuente de verdad: todos los jugadores deben terminar viendo al mismo
+  // ganador. Si cada celular decidiera el ganador por su cuenta (como pasaba
+  // antes con la ruleta puramente visual), cada uno podía "verse a sí mismo"
+  // como ganador cuando había empate.
+  const resolvedWinner =
+    winners.length > 0 ? winners[Math.floor(Math.random() * winners.length)] : null;
+
   state.status = STATUS.FINISHED;
   state.tieBreakerCandidates = winners;
+  state.resolvedWinnerId = resolvedWinner ? resolvedWinner.id : null;
+
   return {
     leaderboard,
     winners,
+    resolvedWinnerId: state.resolvedWinnerId,
     needsTieBreaker: winners.length > 1,
     totalConnections: state.confirmedConnections.size,
   };

@@ -396,13 +396,17 @@ function FinalResultsPlayerView({ results, myId }: { results: FinalResults; myId
   const [showRoulette, setShowRoulette] = useState(results.needsTieBreaker);
   const myEntry = results.leaderboard.find((e) => e.id === myId);
   const myRank = results.leaderboard.findIndex((e) => e.id === myId) + 1;
-  const iAmWinner = results.winners.some((w) => w.id === myId);
+  // El ganador es el que decidió el servidor (resolvedWinnerId), NUNCA una
+  // decisión local: si dos o más empataron, solo uno de ellos es el ganador
+  // real y todos los celulares deben coincidir en quién es.
+  const iAmWinner = results.resolvedWinnerId === myId;
 
   return (
     <div className="glass-card" style={{ width: "min(92vw, 460px)", textAlign: "center" }}>
       {showRoulette ? (
         <TieBreakerRoulette
           candidates={results.winners}
+          winnerId={results.resolvedWinnerId}
           onDone={() => setShowRoulette(false)}
         />
       ) : (
@@ -447,28 +451,50 @@ function FinalResultsPlayerView({ results, myId }: { results: FinalResults; myId
 
 function TieBreakerRoulette({
   candidates,
+  winnerId,
   onDone,
 }: {
   candidates: { id: string; name: string }[];
+  winnerId: string | null;
   onDone: () => void;
 }) {
   const [spinning, setSpinning] = useState(true);
   const [highlighted, setHighlighted] = useState(0);
 
   useEffect(() => {
+    const length = candidates.length;
+    if (length === 0) {
+      setSpinning(false);
+      setTimeout(onDone, 800);
+      return;
+    }
+
+    // El ganador ya lo decidió el servidor (winnerId). Esta animación solo
+    // hace unas cuantas vueltas "de suspenso" y siempre aterriza exactamente
+    // en ese ganador, para que todos los celulares muestren el mismo
+    // resultado final aunque la animación en sí no esté perfectamente
+    // sincronizada entre dispositivos.
+    const winnerIndex = Math.max(
+      0,
+      candidates.findIndex((c) => c.id === winnerId)
+    );
+    const baseTicks = 24 + Math.floor(Math.random() * 10);
+    const remainder = baseTicks % length;
+    const adjustment = (winnerIndex - remainder + length) % length;
+    const totalTicks = baseTicks + adjustment;
+
     let ticks = 0;
-    const maxTicks = 24 + Math.floor(Math.random() * 10);
     const interval = setInterval(() => {
-      setHighlighted((h) => (h + 1) % candidates.length);
       ticks++;
-      if (ticks >= maxTicks) {
+      setHighlighted(ticks % length);
+      if (ticks >= totalTicks) {
         clearInterval(interval);
         setSpinning(false);
         setTimeout(onDone, 2200);
       }
     }, 130);
     return () => clearInterval(interval);
-  }, [candidates.length, onDone]);
+  }, [candidates, winnerId, onDone]);
 
   return (
     <div>

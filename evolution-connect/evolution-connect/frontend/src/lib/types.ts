@@ -69,6 +69,7 @@ export interface PlayerSnapshot {
 export interface FinalResults {
   leaderboard: LeaderboardEntry[];
   winners: LeaderboardEntry[];
+  resolvedWinnerId: string | null;
   needsTieBreaker: boolean;
   totalConnections: number;
 }

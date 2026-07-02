@@ -57,6 +57,29 @@ Ver la guía paso a paso completa en la conversación con Claude, o en resumen:
 necesita WebSockets y estado en memoria persistente entre conexiones — algo que
 un hosting puramente estático no soporta.
 
+## Historial de fixes importantes
+
+- **[Fix] El desempate ahora lo decide el servidor una sola vez.** Antes, la
+  "ruleta" de desempate era pura animación local: cada celular giraba con su
+  propio número aleatorio y decidía por su cuenta si su dueño había ganado.
+  Si dos personas empataban, ambas podían terminar viendo "¡Eres el ganador!"
+  al mismo tiempo. Ahora el servidor sortea un único ganador
+  (`resolvedWinnerId`) apenas se finaliza el juego, y todos los celulares —
+  incluida la ruleta animada — muestran ese mismo resultado (ver
+  `computeFinalResults` en `backend/src/gameState.js` y `TieBreakerRoulette`
+  en `frontend/src/pages/PlayerPage.tsx`).
+
+- **[Fix] Desconexiones momentáneas ya no descuadran los grupos ni sacan a nadie
+  de la sesión.** Antes, si un jugador perdía señal un instante justo cuando el
+  admin iniciaba una nueva ronda (muy común en el WiFi de un evento), se le
+  excluía silenciosamente del cálculo de grupos: los tamaños de grupo quedaban
+  desbalanceados (p. ej. un grupo de 3 y uno de 1) y, si su índice de grupo
+  anterior no encajaba con la nueva ronda, el servidor podía fallar al armar su
+  pantalla ("lo sacaba" de la sesión). Ahora la formación de grupos siempre
+  considera a todos los que se unieron a la sesión, sin importar si su
+  conexión parpadeó un momento, y el servidor nunca revienta por un estado
+  inconsistente (ver `backend/src/gameState.js`).
+
 ## Notas técnicas
 
 - **Sin base de datos**: todo el estado (jugadores, grupos, conexiones) vive en la
