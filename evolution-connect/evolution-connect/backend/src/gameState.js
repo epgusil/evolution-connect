@@ -1,25 +1,22 @@
-/**
- * gameState.js
- * ---------------------------------------------------------
- * Estado del juego, 100% en memoria (sin base de datos).
- * Existe una única sesión activa a la vez, tal como lo pide la
- * especificación ("Single active session at a time").
- * ---------------------------------------------------------
- */
-
 const { nanoid } = require("nanoid");
 const { generateRound } = require("./matching");
 
 const TOTAL_ROUNDS = 3;
 const ROUND_DURATION_SECONDS = 5 * 60; // 5 minutos
 
+// Tiempo de gracia: si alguien se desconecta (pantalla bloqueada, cambio
+// de red, app en segundo plano, etc.) y vuelve a conectarse dentro de
+// esta ventana, se le sigue tratando como "presente" para efectos de
+// armar los grupos de la siguiente ronda.
+const RECONNECT_GRACE_MS = 300 * 1000; // 5 sminutos
+
 const STATUS = {
-  LOBBY: "lobby", // esperando jugadores, admin ve QR
-  INSTRUCTIONS: "instructions", // admin presionó CONNECT, se muestran instrucciones
-  COLOR_ASSIGNMENT: "color_assignment", // jugadores ven su color antes de que arranque el timer
-  ROUND_ACTIVE: "round_active", // timer corriendo, jugadores confirman conexiones
-  BETWEEN_ROUNDS: "between_rounds", // ronda terminó, esperando siguiente
-  FINISHED: "finished", // juego terminado, mostrando resultados
+  LOBBY: "lobby",
+  INSTRUCTIONS: "instructions",
+  COLOR_ASSIGNMENT: "color_assignment",
+  ROUND_ACTIVE: "round_active",
+  BETWEEN_ROUNDS: "between_rounds",
+  FINISHED: "finished",
 };
 
 function createFreshState() {
@@ -30,10 +27,10 @@ function createFreshState() {
     totalRounds: TOTAL_ROUNDS,
     roundDurationSeconds: ROUND_DURATION_SECONDS,
     currentRound: 0,
-    players: new Map(), // id -> player
-    meetCounts: new Map(), // id -> Map(otherId -> count)
-    confirmedConnections: new Set(), // "idA|idB" (idA < idB)
-    roundHistory: [], // [{round, groups: [{color, memberIds}]}]
+    players: new Map(),
+    meetCounts: new Map(),
+    confirmedConnections: new Set(),
+    roundHistory: [],
     roundEndsAt: null,
     roundTimer: null,
     tieBreakerCandidates: [],
@@ -71,13 +68,14 @@ function addPlayer({ name, socketId }) {
     name: trimmed,
     socketId,
     connected: true,
+    disconnectedAt: null, // 👈 nuevo
     joinedAt: Date.now(),
     color: null,
     groupIndex: null,
     score: 0,
-    pendingSentTo: new Set(), // yo seleccioné a X, falta que X me confirme
-    pendingReceivedFrom: new Set(), // X me seleccionó, falta que yo confirme
-    connectedIds: new Set(), // conexiones confirmadas (mutuas)
+    pendingSentTo: new Set(),
+    pendingReceivedFrom: new Set(),
+    connectedIds: new Set(),
   };
   state.players.set(id, player);
   return player;
@@ -93,7 +91,20 @@ function findPlayerBySocket(socketId) {
 
 function markDisconnected(socketId) {
   const player = findPlayerBySocket(socketId);
-  if (player) player.connected = false;
+  if (player) {
+    player.connected = false;
+    player.disconnectedAt = Date.now(); // 👈 nuevo
+  }
+  return player;
+}
+
+/** Reconecta a un jugador que ya existía (player:rejoin). */
+function reconnectPlayer(playerId, socketId) {
+  const player = state.players.get(playerId);
+  if (!player) return null;
+  player.socketId = socketId;
+  player.connected = true;
+  player.disconnectedAt = null; // 👈 limpia la marca de desconexión
   return player;
 }
 
@@ -132,24 +143,32 @@ function serializePlayerSnapshot(playerId) {
   const p = state.players.get(playerId);
   if (!p) return null;
 
-  const groupMembers =
-    p.groupIndex !== null && state.roundHistory[state.currentRound - 1]
-      ? state.roundHistory[state.currentRound - 1].groups[p.groupIndex].memberIds
-          .filter((id) => id !== p.id)
-          .map((id) => {
-            const other = state.players.get(id);
-            const key = connKey(p.id, id);
-            let buttonState = "default";
-            if (state.confirmedConnections.has(key)) buttonState = "confirmed";
-            else if (p.pendingSentTo.has(id)) buttonState = "pending_sent";
-            else if (p.pendingReceivedFrom.has(id)) buttonState = "pending_received";
-            return {
-              id,
-              name: other ? other.name : "??",
-              buttonState,
-            };
-          })
-      : [];
+  // Blindaje: solo intenta leer el grupo si la ronda y el índice
+  // realmente existen. Antes esto podía tronar (y tumbar el socket)
+  // si groupIndex quedaba desalineado con la ronda actual.
+  const currentRoundGroups = state.roundHistory[state.currentRound - 1]?.groups;
+  const myGroup =
+    p.groupIndex !== null && currentRoundGroups
+      ? currentRoundGroups[p.groupIndex]
+      : null;
+
+  const groupMembers = myGroup
+    ? myGroup.memberIds
+        .filter((id) => id !== p.id)
+        .map((id) => {
+          const other = state.players.get(id);
+          const key = connKey(p.id, id);
+          let buttonState = "default";
+          if (state.confirmedConnections.has(key)) buttonState = "confirmed";
+          else if (p.pendingSentTo.has(id)) buttonState = "pending_sent";
+          else if (p.pendingReceivedFrom.has(id)) buttonState = "pending_received";
+          return {
+            id,
+            name: other ? other.name : "??",
+            buttonState,
+          };
+        })
+    : [];
 
   return {
     sessionId: state.sessionId,
@@ -170,8 +189,19 @@ function serializePlayerSnapshot(playerId) {
 /** Genera y asigna la siguiente ronda de grupos. */
 function startNextRound() {
   state.currentRound += 1;
+  const now = Date.now();
+
+  // Se considera "activo" para efectos de armar grupos a quien:
+  //  - está conectado ahora mismo, o
+  //  - se desconectó hace muy poco (dentro del período de gracia),
+  //    porque muy probablemente es un corte momentáneo de celular
+  //    y va a reconectarse en segundos.
   const activePlayerIds = [...state.players.values()]
-    .filter((p) => p.connected)
+    .filter(
+      (p) =>
+        p.connected ||
+        (p.disconnectedAt !== null && now - p.disconnectedAt < RECONNECT_GRACE_MS)
+    )
     .map((p) => p.id);
 
   const { groups } = generateRound(activePlayerIds, state.meetCounts);
@@ -208,11 +238,6 @@ function endRound() {
   state.status = STATUS.BETWEEN_ROUNDS;
 }
 
-/**
- * Registra que `fromId` seleccionó a `toId`.
- * Devuelve { confirmed: boolean } indicando si con esta acción
- * se completó una conexión mutua.
- */
 function selectPlayer(fromId, toId) {
   const from = state.players.get(fromId);
   const to = state.players.get(toId);
@@ -230,7 +255,7 @@ function selectPlayer(fromId, toId) {
   from.pendingSentTo.add(toId);
   to.pendingReceivedFrom.add(fromId);
 
-  const mutual = to.pendingSentTo.has(fromId); // to ya había seleccionado a from antes
+  const mutual = to.pendingSentTo.has(fromId);
   if (mutual) {
     state.confirmedConnections.add(key);
     from.connectedIds.add(toId);
@@ -269,6 +294,7 @@ module.exports = {
   getPlayer,
   findPlayerBySocket,
   markDisconnected,
+  reconnectPlayer, // 👈 nuevo export
   serializePlayerPublic,
   serializeLeaderboard,
   serializeAdminSnapshot,
