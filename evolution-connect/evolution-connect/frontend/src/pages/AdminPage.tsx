@@ -339,11 +339,10 @@ function ColorAssignmentView({
     <div className="glass-card" style={{ maxWidth: 720, width: "100%", textAlign: "center" }}>
       <span className="eyebrow">Ronda {snapshot.currentRound} de {snapshot.totalRounds}</span>
       <h2 className="display-title" style={{ fontSize: "clamp(26px,4vw,38px)" }}>
-        Grupos formados — busquen su color
+        Grupos formados - ¡Busquen su color!
       </h2>
       <p style={{ color: "var(--color-text-dim)" }}>
-        Dales unos segundos a los participantes para encontrar físicamente a las personas
-        de su mismo color antes de iniciar el cronómetro.
+        Tómense un momento para encontrar a las personas con el color que les tocó antes de iniciar el cronómetro.
       </p>
       <div
         style={{
