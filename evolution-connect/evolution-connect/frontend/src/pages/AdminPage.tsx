@@ -166,7 +166,7 @@ function ConfirmResetModal({
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(4,6,26,0.75)",
+        background: "rgba(4,6,26,0.9)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
