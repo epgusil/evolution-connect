@@ -11,9 +11,11 @@ export default function LandingPage() {
           Evolution Connect
         </h1>
         <p style={{ color: "var(--color-text-dim)", marginBottom: 28 }}>
-          Juego de networking en tiempo real. Si eres participante, escanea el código QR
-          que muestra la pantalla del evento. Si eres organizador, entra al panel de
-          administración.
+          Evolution Connect es un juego de networking en tiempo real. 
+          Los participantes escanean un código QR desde su celular, reciben un color asignado y se buscan 
+          físicamente en el lugar del evento. Durante 3 rondas de 5 minutos, cada quien confirma en su 
+          pantalla a las personas que va conociendo — la conexión solo cuenta si ambas partes se confirman 
+          mutuamente. Al final, gana quien haya generado más conexiones confirmadas.
         </p>
         <Link to="/admin" className="btn btn-primary" style={{ textDecoration: "none", display: "inline-block" }}>
           Ir al panel de administración
