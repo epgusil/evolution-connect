@@ -34,6 +34,16 @@ const COLOR_PALETTE = [
   { name: "Púrpura Galáctico", hex: "#AA00FF" },
   { name: "Menta Holográfica", hex: "#64FFDA" },
   { name: "Ámbar Tecnológico", hex: "#FFAB00" },
+  { name: "Fucsia Vibrante", hex: "#E91E8C" },
+  { name: "Celeste Glaciar", hex: "#4FC3F7" },
+  { name: "Dorado Solar", hex: "#FFC400" },
+  { name: "Esmeralda Digital", hex: "#00E676" },
+  { name: "Vino Neón", hex: "#C2185B" },
+  { name: "Azul Cobalto", hex: "#0047FF" },
+  { name: "Salmón Digital", hex: "#FF8A80" },
+  { name: "Bronce Digital", hex: "#CD853F" },
+  { name: "Lavanda Sintética", hex: "#B388FF" },
+  { name: "Plateado Metálico", hex: "#CFD8DC" },
 ];
 
 function colorForIndex(index) {
