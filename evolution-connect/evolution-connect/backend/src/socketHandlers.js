@@ -12,6 +12,45 @@ const gs = require("./gameState");
 const ADMIN_ROOM = "admins";
 const PLAYERS_ROOM = "players";
 
+// Con cientos de jugadores tocando botones al mismo tiempo, reconstruir y
+// retransmitir la lista completa de jugadores en CADA clic satura al
+// servidor (cada snapshot serializa a todos los jugadores + el leaderboard).
+// Para las acciones de alta frecuencia (clics de jugadores) agrupamos varias
+// actualizaciones en una sola retransmisión cada ~200ms. El admin sigue
+// viendo el conteo actualizarse casi en tiempo real (200ms es imperceptible),
+// pero el servidor deja de rehacer ese trabajo miles de veces por segundo.
+let snapshotBroadcastTimer = null;
+function broadcastAdminSnapshotThrottled(io) {
+  if (snapshotBroadcastTimer) return;
+  snapshotBroadcastTimer = setTimeout(() => {
+    snapshotBroadcastTimer = null;
+    io.to(ADMIN_ROOM).emit("admin_snapshot", gs.serializeAdminSnapshot());
+  }, 200);
+}
+
+// Para acciones que el ADMIN dispara directamente (start_round, end_round,
+// etc.) sí tiene sentido retransmitir de inmediato: son poco frecuentes
+// (unas cuantas veces por evento) y el admin espera ver el cambio al toque.
+function broadcastAdminSnapshotImmediate(io) {
+  if (snapshotBroadcastTimer) {
+    clearTimeout(snapshotBroadcastTimer);
+    snapshotBroadcastTimer = null;
+  }
+  io.to(ADMIN_ROOM).emit("admin_snapshot", gs.serializeAdminSnapshot());
+}
+
+// Para "leaderboard_updated" (se dispara cada vez que se confirma una
+// conexión mutua) aplicamos el mismo criterio: agrupar ráfagas de
+// confirmaciones simultáneas en una sola retransmisión.
+let leaderboardBroadcastTimer = null;
+function broadcastLeaderboardThrottled(io) {
+  if (leaderboardBroadcastTimer) return;
+  leaderboardBroadcastTimer = setTimeout(() => {
+    leaderboardBroadcastTimer = null;
+    io.to(ADMIN_ROOM).emit("leaderboard_updated", gs.serializeLeaderboard());
+  }, 200);
+}
+
 function registerSocketHandlers(io) {
   io.on("connection", (socket) => {
     // ---------- ADMIN ----------
@@ -23,7 +62,7 @@ function registerSocketHandlers(io) {
     socket.on("admin:reset_game", (_payload, ack) => {
       gs.resetGame();
       io.to(PLAYERS_ROOM).emit("game_reset");
-      io.to(ADMIN_ROOM).emit("admin_snapshot", gs.serializeAdminSnapshot());
+      broadcastAdminSnapshotImmediate(io);
       ack?.({ ok: true, snapshot: gs.serializeAdminSnapshot() });
     });
 
@@ -35,7 +74,7 @@ function registerSocketHandlers(io) {
       }
       state.status = gs.STATUS.INSTRUCTIONS;
       io.to(PLAYERS_ROOM).emit("game_connected");
-      io.to(ADMIN_ROOM).emit("admin_snapshot", gs.serializeAdminSnapshot());
+      broadcastAdminSnapshotImmediate(io);
       ack?.({ ok: true });
     });
 
@@ -63,7 +102,7 @@ function registerSocketHandlers(io) {
           color: player.color,
         });
       }
-      io.to(ADMIN_ROOM).emit("admin_snapshot", gs.serializeAdminSnapshot());
+      broadcastAdminSnapshotImmediate(io);
       ack?.({ ok: true, round: state.currentRound });
     });
 
@@ -77,13 +116,13 @@ function registerSocketHandlers(io) {
         io.to(PLAYERS_ROOM).emit("round_ended", {
           round: state.currentRound,
         });
-        io.to(ADMIN_ROOM).emit("admin_snapshot", gs.serializeAdminSnapshot());
+        broadcastAdminSnapshotImmediate(io);
       });
       io.to(PLAYERS_ROOM).emit("round_started", {
         round: state.currentRound,
         roundEndsAt: state.roundEndsAt,
       });
-      io.to(ADMIN_ROOM).emit("admin_snapshot", gs.serializeAdminSnapshot());
+      broadcastAdminSnapshotImmediate(io);
       ack?.({ ok: true });
     });
 
@@ -95,7 +134,7 @@ function registerSocketHandlers(io) {
       }
       gs.endRound();
       io.to(PLAYERS_ROOM).emit("round_ended", { round: state.currentRound });
-      io.to(ADMIN_ROOM).emit("admin_snapshot", gs.serializeAdminSnapshot());
+      broadcastAdminSnapshotImmediate(io);
       ack?.({ ok: true });
     });
 
@@ -104,7 +143,7 @@ function registerSocketHandlers(io) {
       const state = gs.getState();
       const results = gs.computeFinalResults();
       io.to(PLAYERS_ROOM).emit("game_finished", results);
-      io.to(ADMIN_ROOM).emit("admin_snapshot", gs.serializeAdminSnapshot());
+      broadcastAdminSnapshotImmediate(io);
       ack?.({ ok: true, results });
     });
 
@@ -115,7 +154,7 @@ function registerSocketHandlers(io) {
         socket.join(PLAYERS_ROOM);
         socket.data.playerId = player.id;
 
-        io.to(ADMIN_ROOM).emit("admin_snapshot", gs.serializeAdminSnapshot());
+        broadcastAdminSnapshotThrottled(io);
         ack?.({ ok: true, playerId: player.id, status: gs.getState().status });
       } catch (err) {
         ack?.({ ok: false, error: err.message });
@@ -130,7 +169,7 @@ function registerSocketHandlers(io) {
       player.connected = true;
       socket.join(PLAYERS_ROOM);
       socket.data.playerId = player.id;
-      io.to(ADMIN_ROOM).emit("admin_snapshot", gs.serializeAdminSnapshot());
+      broadcastAdminSnapshotThrottled(io);
       ack?.({
         ok: true,
         playerId: player.id,
@@ -166,14 +205,14 @@ function registerSocketHandlers(io) {
             withName: from.name,
             myScore: to.score,
           });
-          io.to(ADMIN_ROOM).emit("leaderboard_updated", gs.serializeLeaderboard());
+          broadcastLeaderboardThrottled(io);
         } else if (!result.alreadyConfirmed) {
           io.to(to.socketId).emit("connection_pending", {
             fromId: from.id,
             fromName: from.name,
           });
         }
-        io.to(ADMIN_ROOM).emit("admin_snapshot", gs.serializeAdminSnapshot());
+        broadcastAdminSnapshotThrottled(io);
         ack?.({ ok: true, confirmed: !!result.confirmed });
       } catch (err) {
         ack?.({ ok: false, error: err.message });
@@ -183,7 +222,7 @@ function registerSocketHandlers(io) {
     socket.on("disconnect", () => {
       const player = gs.markDisconnected(socket.id);
       if (player) {
-        io.to(ADMIN_ROOM).emit("admin_snapshot", gs.serializeAdminSnapshot());
+        broadcastAdminSnapshotThrottled(io);
       }
     });
   });
