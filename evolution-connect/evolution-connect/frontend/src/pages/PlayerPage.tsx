@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { socket, emitAck } from "../lib/socket";
 import type { FinalResults, GroupMember, PlayerSnapshot } from "../lib/types";
 import ParticleField from "../components/ParticleField";
 import { useCountdown, formatMMSS } from "../lib/useCountdown";
+import { getRoundQuestions } from "../lib/questionBank";
 
 const STORAGE_KEY = "evolution_connect_player_id";
 
@@ -297,7 +298,10 @@ function RoundView({
   const urgent = secondsLeft !== null && secondsLeft <= 30;
 
   const [search, setSearch] = useState("");
-
+  const suggestedQuestions = useMemo(
+    () => getRoundQuestions(snapshot.currentRound),
+    [snapshot.currentRound]
+  );
   const visibleMembers = [...snapshot.groupMembers]
     .filter((m) => m.name.toLowerCase().includes(search.trim().toLowerCase()))
     .sort((a, b) => a.name.localeCompare(b.name, "es", { sensitivity: "base" }));
@@ -324,7 +328,26 @@ function RoundView({
           Tus conexiones confirmadas: <strong style={{ color: "var(--color-success)" }}>{snapshot.me.score}</strong>
         </p>
       </div>
-
+      <div className="glass-card">
+        <span className="eyebrow">💡 Preguntas para romper el hielo</span>
+        <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
+          {suggestedQuestions.map((q, i) => (
+            <div
+              key={i}
+              style={{
+                padding: "10px 14px",
+                borderRadius: 12,
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid var(--glass-border)",
+                fontSize: 14,
+                color: "var(--color-text-dim)",
+              }}
+            >
+              {q}
+            </div>
+          ))}
+        </div>
+      </div>
       <div className="glass-card">
         <span className="eyebrow">Tu grupo — toca a quien conozcas</span>
 
