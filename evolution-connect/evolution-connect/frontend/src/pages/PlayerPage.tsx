@@ -201,9 +201,11 @@ function JoinView({
   return (
     <div className="glass-card" style={{ width: "min(92vw, 420px)", textAlign: "center" }}>
       <span className="eyebrow">USIL Evolution</span>
-      <h1 className="display-title" style={{ fontSize: 34, margin: "8px 0 4px" }}>
-        Evolution Connect
-      </h1>
+      <img
+        src="/evolution-connect-logo.png"
+        alt="Evolution Connect"
+        style={{ maxWidth: 260, width: "100%", height: "auto", margin: "8px 0 4px" }}
+      />
       <p style={{ color: "var(--color-text-dim)", marginBottom: 24 }}>
         Ingresa tus nombres y apellidos completos para realizar la dinámica.
       </p>
