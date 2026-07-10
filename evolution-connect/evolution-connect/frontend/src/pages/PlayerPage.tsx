@@ -205,11 +205,11 @@ function JoinView({
         Evolution Connect
       </h1>
       <p style={{ color: "var(--color-text-dim)", marginBottom: 24 }}>
-        Ingresa tus NOMBRES y APELLIDOS para unirte a la dinámica de networking.
+        Ingresa tus nombres y apellidos completos para realizar la dinámica.
       </p>
       <input
         className="text-input"
-        placeholder="NOMBRE Y APELLIDO COMPLETO"
+        placeholder="EJM: JUAN JOSE ELERA CHAVEZ"
         value={name}
         onChange={(e) => setName(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && onJoin()}
