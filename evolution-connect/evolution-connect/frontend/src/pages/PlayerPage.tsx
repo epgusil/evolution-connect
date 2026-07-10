@@ -4,6 +4,7 @@ import type { FinalResults, GroupMember, PlayerSnapshot } from "../lib/types";
 import ParticleField from "../components/ParticleField";
 import { useCountdown, formatMMSS } from "../lib/useCountdown";
 import { getRoundQuestions } from "../lib/questionBank";
+import TieBreakerRoulette from "../components/TieBreakerRoulette";
 
 const STORAGE_KEY = "evolution_connect_player_id";
 
