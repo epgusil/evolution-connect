@@ -12,7 +12,7 @@ const LUDIC_QUESTION_BANK: string[] = [
   "Si ganaras la lotería mañana, ¿qué es lo primero que harías?",
   "¿Cuál es tu comida favorita de todos los tiempos?",
   "¿Qué talento oculto tienes que casi nadie conoce?",
-  "Si pudieras cenar con cualquier persona, viva o no, ¿quién sería?",
+  "Si pudieras cenar con cualquier persona famosa, viva o no, ¿quién sería?",
   "¿Cuál fue tu primer trabajo o 'chamba'?",
   "¿Qué canción no puede faltar en tu playlist?",
   "Si tu vida fuera una película, ¿qué género sería?",
@@ -20,7 +20,7 @@ const LUDIC_QUESTION_BANK: string[] = [
   "¿Qué harías con un día completamente libre, sin responsabilidades?",
   "¿Cuál es tu súper poder ideal para el trabajo?",
   "¿Qué destino tienes pendiente en tu lista de viajes?",
-  "¿Cuál fue la última serie/libro que te voló la cabeza?",
+  "¿Cuál fue el último libro que leíste? ¿Te gustó?",
 ];
 
 /**
