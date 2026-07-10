@@ -5,6 +5,7 @@ import type { AdminSnapshot, LeaderboardEntry, FinalResults } from "../lib/types
 import ParticleField from "../components/ParticleField";
 import { useCountdown, formatMMSS } from "../lib/useCountdown";
 import { getRoundQuestions } from "../lib/questionBank";
+import TieBreakerRoulette from "../components/TieBreakerRoulette";
 
 export default function AdminPage() {
   const [snapshot, setSnapshot] = useState<AdminSnapshot | null>(null);
@@ -472,16 +473,36 @@ function FinalResultsView({
   snapshot: AdminSnapshot;
   finalResults: FinalResults | null;
 }) {
-  // Si tenemos el resultado resuelto por el servidor (viene del ack de
-  // admin:finish_game), lo usamos porque es la fuente de verdad real,
-  // incluida la resolución de empates. Si no (p. ej. se recargó la página
-  // del admin después de finalizar), caemos al primero del leaderboard como
-  // aproximación razonable.
+  // Si hubo empate, primero mostramos la misma animación de ruleta que ven
+  // los jugadores en su celular (útil porque esta pantalla se proyecta en
+  // grande durante el evento), y solo después el resultado final.
+  const [showRoulette, setShowRoulette] = useState(finalResults?.needsTieBreaker ?? false);
+
+  // Si finalResults llega después del primer render (por ejemplo, se
+  // recargó la página del admin ya con el juego finalizado), sincronizamos.
+  useEffect(() => {
+    if (finalResults?.needsTieBreaker) setShowRoulette(true);
+  }, [finalResults?.needsTieBreaker]);
+
   const winnerId = finalResults?.resolvedWinnerId;
   const winner = winnerId
     ? snapshot.leaderboard.find((e) => e.id === winnerId)
     : snapshot.leaderboard[0];
   const hadTie = finalResults?.needsTieBreaker ?? false;
+
+  if (showRoulette && finalResults) {
+    return (
+      <div style={{ width: "100%", maxWidth: 640 }}>
+        <div className="glass-card" style={{ textAlign: "center" }}>
+          <TieBreakerRoulette
+            candidates={finalResults.winners}
+            winnerId={finalResults.resolvedWinnerId}
+            onDone={() => setShowRoulette(false)}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ width: "100%", maxWidth: 1040, display: "flex", flexDirection: "column", gap: 20 }}>
@@ -506,7 +527,6 @@ function FinalResultsView({
     </div>
   );
 }
-
 function Stat({ label, value }: { label: string; value: number }) {
   return (
     <div style={{ textAlign: "center" }}>
