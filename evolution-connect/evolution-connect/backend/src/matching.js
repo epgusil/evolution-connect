@@ -8,45 +8,35 @@
  * minimizando, de forma greedy, el número de personas que ya se conocieron
  * en rondas anteriores dentro del mismo grupo.
  *
- * No es un solver exacto (NP-difícil para tamaños grandes), pero para
- * grupos de ~15-25 personas y 3 rondas da resultados muy buenos en la
- * práctica: cada jugador termina conociendo un conjunto casi totalmente
- * distinto de personas en cada ronda.
+ * No es un solver exacto (NP-difícil para tamaños grandes), pero da
+ * resultados muy buenos en la práctica: cada jugador termina conociendo un
+ * conjunto casi totalmente distinto de personas en cada ronda.
  * ---------------------------------------------------------
  */
 
-const TARGET_GROUP_SIZE = 20; // tamaño de grupo objetivo, según especificación
+// Siempre hay 10 "salas" de color fijas (no depende de la cantidad de
+// jugadores). Cada sala necesita un mínimo de 2 personas para tener sentido
+// (que haya con quién conocerse), así que se necesitan al menos 20
+// jugadores para llenar las 10 a la vez.
+const TARGET_NUM_GROUPS = 10;
+const MIN_PLAYERS_PER_GROUP = 2;
 
 const COLOR_PALETTE = [
-  { name: "Azul Eléctrico", hex: "#00CFFF" },
-  { name: "Violeta Cuántico", hex: "#5A00FF" },
-  { name: "Magenta Neón", hex: "#FF00C8" },
-  { name: "Verde Matrix", hex: "#00FF7F" },
-  { name: "Naranja Pulso", hex: "#FF8C00" },
-  { name: "Rojo Plasma", hex: "#FF3B3B" },
+  { name: "Azul Conexión", hex: "#00CFFF" },
+  { name: "Morado Cuántico", hex: "#5A00FF" },
+  { name: "Magenta Innovador", hex: "#FF00C8" },
+  { name: "Verde Evolutivo", hex: "#00FF7F" },
+  { name: "Naranja Dinámico", hex: "#FF8C00" },
+  { name: "Rojo Disruptivo", hex: "#FF3B3B" },
   { name: "Cian Digital", hex: "#00FFE5" },
-  { name: "Rosa Holográfico", hex: "#FF6FD8" },
-  { name: "Amarillo Circuito", hex: "#FFD700" },
-  { name: "Índigo Nebulosa", hex: "#3D5AFE" },
-  { name: "Turquesa Sintético", hex: "#1DE9B6" },
-  { name: "Lima Digital", hex: "#C6FF00" },
-  { name: "Coral Futurista", hex: "#FF7043" },
-  { name: "Púrpura Galáctico", hex: "#AA00FF" },
-  { name: "Menta Holográfica", hex: "#64FFDA" },
-  { name: "Ámbar Tecnológico", hex: "#FFAB00" },
-  { name: "Fucsia Vibrante", hex: "#E91E8C" },
-  { name: "Celeste Glaciar", hex: "#4FC3F7" },
-  { name: "Dorado Solar", hex: "#FFC400" },
-  { name: "Esmeralda Digital", hex: "#00E676" },
-  { name: "Vino Neón", hex: "#C2185B" },
-  { name: "Azul Cobalto", hex: "#0047FF" },
-  { name: "Salmón Digital", hex: "#FF8A80" },
-  { name: "Bronce Digital", hex: "#CD853F" },
-  { name: "Lavanda Sintética", hex: "#B388FF" },
-  { name: "Plateado Metálico", hex: "#CFD8DC" },
+  { name: "Amarillo Visionario", hex: "#FFD700" },
+  { name: "Índigo Inteligente", hex: "#3D5AFE" },
+  { name: "Rosa Colaborativo", hex: "#FF6FD8" },
 ];
 
 function colorForIndex(index) {
+  // Con el límite fijo de 10 grupos, index nunca debería salirse del
+  // tamaño de la paleta, pero se deja esta protección por si acaso.
   const base = COLOR_PALETTE[index % COLOR_PALETTE.length];
   const cycle = Math.floor(index / COLOR_PALETTE.length);
   return cycle === 0
@@ -54,14 +44,22 @@ function colorForIndex(index) {
     : { name: `${base.name} ${cycle + 1}`, hex: base.hex };
 }
 
-/** Calcula cuántos grupos y de qué tamaño, dado el total de jugadores. */
+/**
+ * Calcula cuántos grupos y de qué tamaño, dado el total de jugadores.
+ *
+ * - Con 20 jugadores o más: siempre exactamente 10 grupos (las 10 salas
+ *   de color), repartidos lo más parejo posible.
+ * - Con menos de 20: se reduce el número de grupos (nunca por debajo de 2
+ *   personas por grupo), manteniendo el reparto lo más parejo posible.
+ *   Ejemplos: 4 jugadores -> 2 grupos de 2. 9 jugadores -> 1 grupo de 3 y
+ *   3 grupos de 2 (4 grupos en total).
+ */
 function computeGroupCapacities(totalPlayers) {
   if (totalPlayers <= 0) return [];
+  if (totalPlayers === 1) return [1]; // caso degenerado: un solo jugador
 
-  let numGroups = Math.round(totalPlayers / TARGET_GROUP_SIZE);
-  // Nunca menos de 2 grupos si hay al menos 4 jugadores (si no, no hay "mezcla").
-  if (totalPlayers >= 4) numGroups = Math.max(2, numGroups);
-  numGroups = Math.max(1, Math.min(numGroups, totalPlayers));
+  const maxGroupsByMinSize = Math.floor(totalPlayers / MIN_PLAYERS_PER_GROUP);
+  const numGroups = Math.max(1, Math.min(TARGET_NUM_GROUPS, maxGroupsByMinSize));
 
   const base = Math.floor(totalPlayers / numGroups);
   const remainder = totalPlayers - base * numGroups;
@@ -148,5 +146,6 @@ function bumpMeetCount(meetCounts, a, b) {
 module.exports = {
   generateRound,
   computeGroupCapacities,
-  TARGET_GROUP_SIZE,
+  TARGET_NUM_GROUPS,
+  MIN_PLAYERS_PER_GROUP,
 };
