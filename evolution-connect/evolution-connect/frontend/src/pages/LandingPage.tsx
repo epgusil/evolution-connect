@@ -7,9 +7,11 @@ export default function LandingPage() {
       <ParticleField />
       <div className="glass-card" style={{ maxWidth: 480, textAlign: "center" }}>
         <span className="eyebrow">USIL Evolution</span>
-        <h1 className="display-title" style={{ fontSize: "clamp(32px, 6vw, 44px)", margin: "10px 0" }}>
-          Evolution Connect
-        </h1>
+        <img
+          src="/evolution-connect-logo.png"
+          alt="Evolution Connect"
+          style={{ maxWidth: "min(90%, 420px)", width: "100%", height: "auto", margin: "10px 0" }}
+        />
         <p style={{ color: "var(--color-text-dim)", marginBottom: 28 }}>
           <b>Evolution Connect</b> es un juego de networking en tiempo real.
           Los participantes escanean un código QR desde su celular, reciben un color asignado y se buscan 
