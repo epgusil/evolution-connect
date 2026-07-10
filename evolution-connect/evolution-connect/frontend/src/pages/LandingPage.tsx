@@ -19,7 +19,7 @@ export default function LandingPage() {
           pantalla a las personas que va conociendo.
         </p>
         <Link to="/admin" className="btn btn-primary" style={{ textDecoration: "none", display: "inline-block" }}>
-          ¡EMPECEMOS!
+          ¡EMPECÉMOS!
         </Link>
       </div>
     </div>
