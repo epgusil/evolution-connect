@@ -66,17 +66,34 @@ function registerSocketHandlers(io) {
       ack?.({ ok: true, snapshot: gs.serializeAdminSnapshot() });
     });
 
-    // Admin presiona "CONNECT": pasa del lobby a la pantalla de instrucciones
-    socket.on("admin:connect_game", (_payload, ack) => {
-      const state = gs.getState();
-      if (state.status !== gs.STATUS.LOBBY) {
-        return ack?.({ ok: false, error: "INVALID_STATE" });
-      }
-      state.status = gs.STATUS.INSTRUCTIONS;
-      io.to(PLAYERS_ROOM).emit("game_connected");
-      broadcastAdminSnapshotImmediate(io);
-      ack?.({ ok: true });
-    });
+  // Admin presiona "CONNECT": pasa del lobby directo a la asignación de colores
+  // (se salta la pantalla de instrucciones y arranca la ronda 1 de una vez)
+  socket.on("admin:connect_game", (_payload, ack) => {
+    const state = gs.getState();
+    if (state.status !== gs.STATUS.LOBBY) {
+      return ack?.({ ok: false, error: "INVALID_STATE" });
+    }
+    if (state.players.size === 0) {
+      return ack?.({ ok: false, error: "NO_PLAYERS" });
+    }
+  
+    io.to(PLAYERS_ROOM).emit("game_connected");
+  
+    gs.startNextRound();
+  
+    // Enviar a cada jugador su color/grupo individualmente
+    for (const player of state.players.values()) {
+      if (!player.connected) continue;
+      io.to(player.socketId).emit("round_generated", {
+        round: state.currentRound,
+        totalRounds: state.totalRounds,
+        color: player.color,
+      });
+    }
+  
+    broadcastAdminSnapshotImmediate(io);
+    ack?.({ ok: true, round: state.currentRound });
+  });
 
     // Admin presiona "START ROUND": genera colores + arranca timer
     socket.on("admin:start_round", (_payload, ack) => {
