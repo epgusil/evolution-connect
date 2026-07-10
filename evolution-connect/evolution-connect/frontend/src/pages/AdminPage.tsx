@@ -135,12 +135,11 @@ function AdminHeader({
     >
       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
         <span className="eyebrow">Panel de administración</span>
-        <h1
-          className="display-title"
-          style={{ fontSize: "clamp(28px, 4vw, 40px)" }}
-        >
-          Evolution Connect
-        </h1>
+      <img
+        src="/evolution-connect-logo.png"
+        alt="Evolution Connect"
+        style={{ maxWidth: 260, width: "100%", height: "auto" }}
+      />
       </div>
       <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
         <span className="pill">
