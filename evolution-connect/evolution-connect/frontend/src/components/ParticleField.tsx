@@ -48,7 +48,7 @@ export default function ParticleField() {
 
     function resize() {
       width = canvas!.width = window.innerWidth;
-      height = canvas!.height = window.innerHeight;
+      height = canvas!.height = document.documentElement.scrollHeight;
     }
     window.addEventListener("resize", resize);
 
@@ -103,10 +103,10 @@ export default function ParticleField() {
       ref={canvasRef}
       aria-hidden="true"
       style={{
-        position: "fixed",
+        position: "absolute",
         inset: 0,
         width: "100vw",
-        height: "100vh",
+        height: "100%",
         zIndex: 0,
         pointerEvents: "none",
         opacity: 0.8,
