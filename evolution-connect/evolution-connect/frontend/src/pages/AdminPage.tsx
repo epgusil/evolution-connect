@@ -284,7 +284,7 @@ function InstructionsView({ busy, onStartRound }: { busy: boolean; onStartRound:
     "Una vez todos estén en sus grupos, iniciaremos la primera ronda. Habrá 2 rondas únicamente.",
     "Cuando esta inicie, tendrán 5 minutos para conocer a los que puedan dentro de su equipo.",
     "Cuando termines de conocer a alguien selecciona su nombre en tu pantalla y asegúrate de que la otra persona también haya seleccionado el tuyo. Eso nos indica que se han conocido efectivamente.",
-    "Cuando acaben los 5 minutos y acabe la primera ronda, se les asignará otro color y se unirán a sus nuevos equipos, dando inicio a la siguiente ronda, hasta que culminen las 3.",
+    "Cuando acaben los 5 minutos y acabe la primera ronda, se les asignará otro color y se unirán a sus nuevos equipos, dando inicio a la siguiente ronda, hasta que culminen las 2.",
     "Finalmente, el ganador será aquel que conoció a más personas en total y si hay un empate, se escogerá aleatoriamente a uno de ellos.",
   ];
   return (
