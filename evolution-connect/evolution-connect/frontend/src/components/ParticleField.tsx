@@ -30,9 +30,9 @@ export default function ParticleField() {
     const prefersReducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
     ).matches;
-
+    
     let width = (canvas.width = window.innerWidth);
-    let height = (canvas.height = window.innerHeight);
+    let height = (canvas.height = document.documentElement.scrollHeight);
 
     const density = Math.min(70, Math.floor((width * height) / 22000));
     const particles: Particle[] = Array.from({ length: density }, () => ({
