@@ -281,7 +281,7 @@ function InstructionsView({ busy, onStartRound }: { busy: boolean; onStartRound:
   const items = [
     "A cada jugador se le asignará un color al iniciar la ronda.",
     "Cuando sepan su color, levanten su teléfono y busquen a quienes pertenezcan a su equipo.",
-    "Una vez todos estén en sus grupos, iniciaremos la primera ronda. Habrá 3 rondas únicamente.",
+    "Una vez todos estén en sus grupos, iniciaremos la primera ronda. Habrá 2 rondas únicamente.",
     "Cuando esta inicie, tendrán 5 minutos para conocer a los que puedan dentro de su equipo.",
     "Cuando termines de conocer a alguien selecciona su nombre en tu pantalla y asegúrate de que la otra persona también haya seleccionado el tuyo. Eso nos indica que se han conocido efectivamente.",
     "Cuando acaben los 5 minutos y acabe la primera ronda, se les asignará otro color y se unirán a sus nuevos equipos, dando inicio a la siguiente ronda, hasta que culminen las 3.",
