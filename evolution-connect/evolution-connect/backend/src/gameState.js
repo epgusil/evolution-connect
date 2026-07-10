@@ -10,7 +10,7 @@
 const { nanoid } = require("nanoid");
 const { generateRound } = require("./matching");
 
-const TOTAL_ROUNDS = 3;
+const TOTAL_ROUNDS = 2;
 const ROUND_DURATION_SECONDS = 5 * 60; // 5 minutos
 
 const STATUS = {
