@@ -10,8 +10,8 @@ interface Particle {
 }
 
 const COLORS = {
-  accent: "0, 207, 255",
-  secondary: "90, 0, 255",
+  accent: "192, 132, 252",
+  secondary: "147, 51, 234",
 };
 
 /**
@@ -80,7 +80,7 @@ export default function ParticleField() {
             ctx!.beginPath();
             ctx!.moveTo(a.x, a.y);
             ctx!.lineTo(b.x, b.y);
-            ctx!.strokeStyle = `rgba(0, 207, 255, ${0.12 * (1 - dist / maxDist)})`;
+            ctx!.strokeStyle = `rgba(192, 132, 252, ${0.12 * (1 - dist / maxDist)})`;
             ctx!.lineWidth = 1;
             ctx!.stroke();
           }
