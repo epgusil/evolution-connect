@@ -512,7 +512,7 @@ function Leaderboard({ entries }: { entries: LeaderboardEntry[] }) {
               gap: 14,
               padding: "10px 16px",
               borderRadius: 12,
-              background: i === 0 && e.score > 0 ? "rgba(0,255,127,0.12)" : "rgba(255,255,255,0.04)",
+              background: "rgba(255,255,255,0.04)",
               border: "1px solid var(--glass-border)",
             }}
           >
@@ -521,13 +521,25 @@ function Leaderboard({ entries }: { entries: LeaderboardEntry[] }) {
                 fontFamily: "var(--font-display)",
                 fontWeight: 800,
                 width: 28,
-                color: i === 0 && e.score > 0 ? "var(--color-success)" : "var(--color-text-faint)",
+                color: "var(--color-text-faint)",
               }}
             >
               {i + 1}
             </span>
-            <span style={{ flex: 1, fontWeight: 600 }}>
-              {e.name} {!e.connected && <span style={{ color: "var(--color-warning)", fontSize: 12 }}>(desconectado)</span>}
+            <span style={{ flex: 1, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
+              {e.name}
+              {!e.connected && (
+                <span
+                  title="Desconectado"
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: "50%",
+                    background: "var(--color-danger)",
+                    display: "inline-block",
+                  }}
+                />
+              )}
             </span>
             <span style={{ fontFamily: "var(--font-display)", fontWeight: 700 }}>{e.score}</span>
           </div>
