@@ -296,6 +296,12 @@ function RoundView({
   const color = snapshot.me.color;
   const urgent = secondsLeft !== null && secondsLeft <= 30;
 
+  const [search, setSearch] = useState("");
+
+  const visibleMembers = [...snapshot.groupMembers]
+    .filter((m) => m.name.toLowerCase().includes(search.trim().toLowerCase()))
+    .sort((a, b) => a.name.localeCompare(b.name, "es", { sensitivity: "base" }));
+
   return (
     <div style={{ width: "min(94vw, 480px)", display: "flex", flexDirection: "column", gap: 16 }}>
       <div className="glass-card" style={{ textAlign: "center", padding: 24 }}>
@@ -321,11 +327,45 @@ function RoundView({
 
       <div className="glass-card">
         <span className="eyebrow">Tu grupo — toca a quien conozcas</span>
+
+        <div
+          style={{
+            marginTop: 14,
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            background: "rgba(255,255,255,0.06)",
+            border: "1.5px solid var(--glass-border)",
+            borderRadius: 14,
+            padding: "10px 14px",
+          }}
+        >
+          <span style={{ fontSize: 16, opacity: 0.75 }}>🔍</span>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar por nombre…"
+            style={{
+              flex: 1,
+              background: "transparent",
+              border: "none",
+              outline: "none",
+              color: "var(--color-text)",
+              fontFamily: "var(--font-body)",
+              fontSize: 15,
+            }}
+          />
+        </div>
+
         <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 10 }}>
           {snapshot.groupMembers.length === 0 && (
             <p style={{ color: "var(--color-text-faint)" }}>No hay más personas en tu grupo.</p>
           )}
-          {snapshot.groupMembers.map((m) => (
+          {snapshot.groupMembers.length > 0 && visibleMembers.length === 0 && (
+            <p style={{ color: "var(--color-text-faint)" }}>Nadie coincide con "{search}".</p>
+          )}
+          {visibleMembers.map((m) => (
             <PlayerButton key={m.id} member={m} onSelect={() => onSelect(m.id)} />
           ))}
         </div>
