@@ -1,9 +1,9 @@
 @import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@400;500;600;700;800&display=swap");
 
 :root {
-  --color-primary: #091d8b;
-  --color-secondary: #5a00ff;
-  --color-accent: #00cfff;
+  --color-primary: #4B1FA8;
+  --color-secondary: #9333EA;
+  --color-accent: #C084FC;
   --color-success: #00ff7f;
   --color-warning: #ff8c00;
   --color-danger: #ff3b3b;
@@ -11,12 +11,12 @@
   --color-text-dim: rgba(255, 255, 255, 0.68);
   --color-text-faint: rgba(255, 255, 255, 0.42);
 
-  --bg-deep: #04061a;
-  --bg-mid: #0a0f3d;
+  --bg-deep: #150a30;
+  --bg-mid: #2a1470;
 
   --glass-bg: rgba(255, 255, 255, 0.06);
   --glass-border: rgba(255, 255, 255, 0.14);
-  --glass-highlight: rgba(0, 207, 255, 0.18);
+  --glass-highlight: rgba(192, 132, 252, 0.18);
 
   --font-display: "Orbitron", "Inter", sans-serif;
   --font-body: "Inter", system-ui, sans-serif;
@@ -44,12 +44,12 @@ body {
   color: var(--color-text);
   background: radial-gradient(
       ellipse 120% 80% at 15% -10%,
-      rgba(90, 0, 255, 0.35),
+      rgba(147, 51, 234, 0.35),
       transparent 55%
     ),
     radial-gradient(
       ellipse 100% 70% at 100% 0%,
-      rgba(0, 207, 255, 0.22),
+      rgba(192, 132, 252, 0.22),
       transparent 50%
     ),
     linear-gradient(180deg, var(--bg-deep) 0%, var(--bg-mid) 55%, var(--bg-deep) 100%);
