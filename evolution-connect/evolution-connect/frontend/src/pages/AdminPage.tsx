@@ -4,6 +4,7 @@ import { socket, emitAck } from "../lib/socket";
 import type { AdminSnapshot, LeaderboardEntry, FinalResults } from "../lib/types";
 import ParticleField from "../components/ParticleField";
 import { useCountdown, formatMMSS } from "../lib/useCountdown";
+import { getRoundQuestions } from "../lib/questionBank";
 
 export default function AdminPage() {
   const [snapshot, setSnapshot] = useState<AdminSnapshot | null>(null);
@@ -380,6 +381,7 @@ function LiveMonitorView({
   onEndRound: () => void;
 }) {
   const secondsLeft = useCountdown(snapshot.roundEndsAt);
+  const suggestedQuestions = getRoundQuestions(snapshot.currentRound);
 
   return (
     <div style={{ width: "100%", maxWidth: 1040, display: "flex", flexDirection: "column", gap: 20 }}>
@@ -400,6 +402,27 @@ function LiveMonitorView({
         <button className="btn btn-danger" disabled={busy} onClick={onEndRound}>
           Terminar ronda
         </button>
+      </div>
+
+      <div className="glass-card">
+        <span className="eyebrow">💡 Preguntas para romper el hielo</span>
+        <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
+          {suggestedQuestions.map((q, i) => (
+            <div
+              key={i}
+              style={{
+                padding: "10px 14px",
+                borderRadius: 12,
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid var(--glass-border)",
+                fontSize: 14,
+                color: "var(--color-text-dim)",
+              }}
+            >
+              {q}
+            </div>
+          ))}
+        </div>
       </div>
 
       <Leaderboard entries={snapshot.leaderboard} />
